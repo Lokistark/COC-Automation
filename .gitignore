@@ -1,0 +1,52 @@
+# Bytecode and Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Local database and state files
+*.db
+*.sqlite3
+data/coc_memory.db
+data/*.db
+
+# Generated screenshots and test captures
+data/screenshots/*.jpg
+data/screenshots/*.png
+data/screenshots/*.jpeg
+!data/screenshots/.gitkeep
+
+# Logs and runtime dumps
+*.log
+logs/
+
+# Sensitive files, secrets, credentials, and API keys
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.token
+*.secret
+credentials.json
+client_secret*.json
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoC Autonomous AI Game Controller - Tactical Command Center</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="brand">
+                <div class="logo-icon">🛡️</div>
+                <div>
+                    <h1>CoC Autonomous AI Game Controller</h1>
+                    <div class="subtext">Phases 1–6 Integrated Autonomous Prototype (Vision • Reasoning • Planning • Simulation • Loop)</div>
+                </div>
+            </div>
+
+            <div class="top-status-group">
+                <div class="system-pill">
+                    <span class="dot live-dot"></span>
+                    <span id="connStatus">ONLINE</span>
+                </div>
+                <div class="controller-pill" id="controllerPill">
+                    STATUS: <strong id="controllerStateText">STOPPED</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- Command Control & Autonomous Loop Panel -->
+        <section class="control-panel card">
+            <div class="control-header">
+                <div>
+                    <h3>🎮 Autonomous Execution & Safety Interlock</h3>
+                    <p class="section-desc">Observe → Interpret → Check Confidence → Evaluate → Select → Check Prerequisites → Simulate → Verify → Log</p>
+                </div>
+                <div class="btn-group">
+                    <button id="btnStart" class="btn btn-primary" onclick="sendControl('start')">▶ Run Autonomous Loop</button>
+                    <button id="btnStep" class="btn btn-secondary" onclick="sendControl('step')">⏭ Single Step Tick</button>
+                    <button id="btnPause" class="btn btn-warning" onclick="sendControl('pause')">⏸ Pause</button>
+                    <button id="btnResume" class="btn btn-secondary" onclick="sendControl('resume')">⏯ Resume</button>
+                    <button id="btnStop" class="btn btn-dark" onclick="sendControl('stop')">⏹ Stop</button>
+                    <button id="btnEmergency" class="btn btn-danger" onclick="sendControl('emergency_stop')">🚨 EMERGENCY STOP</button>
+                    <button id="btnReset" class="btn btn-outline" onclick="sendControl('reset')">🔄 Reset State</button>
+                </div>
+            </div>
+
+            <!-- Loop Settings Bar -->
+            <div class="loop-settings-bar">
+                <div class="setting-item">
+                    <label>Execution Mode:</label>
+                    <select id="loopModeSelect" onchange="updateLoopConfig()">
+                        <option value="auto">Autonomous Sandbox Mode</option>
+                        <option value="manual">Manual Approval Mode</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Max Iterations:</label>
+                    <input type="number" id="loopMaxIter" value="10" min="1" max="100" style="width: 70px;" onchange="updateLoopConfig()">
+                </div>
+                <div class="setting-item">
+                    <label>Loop Delay (sec):</label>
+                    <input type="number" id="loopDelay" value="3.5" min="1" max="30" step="0.5" style="width: 70px;" onchange="updateLoopConfig()">
+                </div>
+                <div class="setting-item loop-progress">
+                    <span class="tag-label">Progress:</span>
+                    <strong id="loopProgressText">Iteration 0 / 10</strong>
+                    <span id="failureCounter" class="failure-badge">0 Failures</span>
+                </div>
+            </div>
+
+            <!-- Manual Approval Banner (Dynamic) -->
+            <div id="manualApprovalBanner" class="approval-banner" style="display: none;">
+                <div class="approval-info">
+                    <span class="approval-icon">⚠️</span>
+                    <div>
+                        <strong>MANUAL APPROVAL REQUESTED</strong>
+                        <div id="approvalActionText" class="approval-desc">Proposed Action: ...</div>
+                    </div>
+                </div>
+                <div class="approval-actions">
+                    <button class="btn btn-sm btn-primary" onclick="approveAction()">✓ Approve & Execute</button>
+                    <button class="btn btn-sm btn-dark" onclick="sendControl('step')">Skip / Re-evaluate</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column: Vision, Strategy & Economy -->
+            <div class="col-left">
+                <!-- PHASE 2: Screen Vision & Perception -->
+                <div class="card vision-card">
+                    <div class="card-header">
+                        <h3>👁️ Vision Perception & Screenshot Analysis</h3>
+                        <div class="vision-actions">
+                            <button class="btn btn-xs btn-outline" onclick="generateSynthetic('village')">🎲 Synth Village</button>
+                            <button class="btn btn-xs btn-outline" onclick="generateSynthetic('enemy_base')">🎯 Synth Enemy</button>
+                            <label class="btn btn-xs btn-secondary file-upload-btn">
+                                📁 Upload Screenshot
+                                <input type="file" id="fileUpload" accept="image/*" style="display: none;" onchange="uploadScreenshot(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="vision-viewer-container">
+                        <div class="screenshot-frame">
+                            <img id="annotatedImage" src="/api/vision/annotated.jpg" alt="Screen Vision Analysis" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'600\' height=\'300\' viewBox=\'0 0 600 300\'><rect fill=\'%23121824\' width=\'600\' height=\'300\'/><text fill=\'%23627291\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\'>Click Synth Village or Upload Screenshot to Run Vision Perception</text></svg>'">
+                        </div>
+                        <div class="vision-telemetry">
+                            <div class="telemetry-item">
+                                <span class="t-label">Status:</span>
+                                <span id="visionStatus" class="t-val highlight-green">Vision Active</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="t-label">Resolution:</span>
+                                <span id="visionResolution" class="t-val">1280 x 720</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="t-label">Overall Confidence:</span>
+                                <span id="visionConfidence" class="t-val highlight">82%</span>
+                            </div>
+                            <div class="telemetry-item">
+                                <span class="t-label">View Type:</span>
+                                <span id="visionViewType" class="t-val">Home Village</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Uncertainty Notices -->
+                    <div id="uncertaintyBox" class="uncertainty-box" style="display: none;">
+                        <span class="unc-title">⚠️ Perception Uncertainties:</span>
+                        <ul id="uncertaintyList"></ul>
+                    </div>
+                </div>
+
+                <!-- PHASE 3: AI Strategic Decision Engine -->
+                <div class="card card-action" id="actionCard">
+                    <div class="card-header">
+                        <h3>🧠 Strategic Decision Engine</h3>
+                        <span class="badge badge-accent" id="confidenceBadge">Confidence: 96%</span>
+                    </div>
+
+                    <div class="objective-box">
+                        <div class="objective-label">CURRENT STRATEGIC OBJECTIVE</div>
+                        <h4 id="objectiveTitle">Town Hall 11 Air Defense & Hero Progression</h4>
+                        <p id="objectiveDesc">Prioritize Air Defense upgrades to withstand dragon attacks and level Archer Queen to 50.</p>
+                    </div>
+
+                    <div class="next-decision-box">
+                        <div class="decision-meta">
+                            <span class="decision-title">Recommended Next Action</span>
+                            <span class="action-type-tag" id="actionTypeTag">UPGRADE_BUILDING</span>
+                        </div>
+                        <div class="action-target-display" id="actionTargetDisplay">
+                            Air Defense #3 (Lvl 8 → 9)
+                        </div>
+                        <div class="action-rationale" id="actionRationale">
+                            Evaluating village state...
+                        </div>
+                        
+                        <div class="prereq-checker">
+                            <div class="prereq-title">Prerequisites Verification:</div>
+                            <div class="prereq-status" id="prereqStatus">
+                                <span class="check-icon">✓</span> Builder Available & Resources Verified
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Village Economy & Resources -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>💰 Village Economy & Resources</h3>
+                        <span class="th-badge" id="thBadge">Town Hall 11</span>
+                    </div>
+
+                    <div class="resource-meters">
+                        <!-- Gold -->
+                        <div class="resource-row">
+                            <div class="res-info">
+                                <span class="res-name"><span class="res-icon">🟡</span> Gold</span>
+                                <span class="res-val" id="goldVal">4,250,000 / 8,000,000</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill gold-fill" id="goldBar" style="width: 53%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Elixir -->
+                        <div class="resource-row">
+                            <div class="res-info">
+                                <span class="res-name"><span class="res-icon">🟣</span> Elixir</span>
+                                <span class="res-val" id="elixirVal">3,600,000 / 8,000,000</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill elixir-fill" id="elixirBar" style="width: 45%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Dark Elixir -->
+                        <div class="resource-row">
+                            <div class="res-info">
+                                <span class="res-name"><span class="res-icon">⚫</span> Dark Elixir</span>
+                                <span class="res-val" id="darkElixirVal">98,000 / 150,000</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill dark-elixir-fill" id="darkElixirBar" style="width: 65%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="res-gems-strip">
+                            <span>💎 Available Gems: <strong id="gemsVal">1,450</strong></span>
+                            <span class="shield-tag">🛡️ Active Shield: 14h 22m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Builders -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔨 Builder Status</h3>
+                        <span class="builder-count-pill" id="builderPill">3 / 5 Free</span>
+                    </div>
+                    <div id="busyBuildersList" class="builder-jobs-list"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Attack Planner, Tasks & Logs -->
+            <div class="col-right">
+                <!-- PHASE 4: Attack Planner & Battle Simulator -->
+                <div class="card attack-card">
+                    <div class="card-header">
+                        <h3>⚔️ Attack Planner & Battle Simulator</h3>
+                        <span class="badge badge-info" id="attackThreatBadge">Threat: MODERATE</span>
+                    </div>
+
+                    <div class="attack-plan-selector">
+                        <label>Select Attack Strategy:</label>
+                        <select id="attackPlanSelect" onchange="renderSelectedPlan()">
+                            <option value="PLAN-AIR-SMASH">Plan A: E-Dragon Funnel & Air Smash (Air)</option>
+                            <option value="PLAN-HYBRID">Plan B: Queen Walk + Hybrid Surge (Ground)</option>
+                            <option value="PLAN-SAFE-FARM">Plan C: High-Loot 2-Star Resource Sniping</option>
+                        </select>
+                    </div>
+
+                    <div id="planDetailsBox" class="plan-details-box">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="battle-sim-strip">
+                        <button class="btn btn-sm btn-primary" onclick="simulateCurrentBattle()">⚡ Run Battle Simulator</button>
+                        <span class="sim-disclaimer">Local Sandbox Simulation Only • Live Attacks Prohibited</span>
+                    </div>
+
+                    <div id="battleOutcomeBox" class="battle-outcome-box" style="display: none;">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Strategic Task Planner Queue -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 Strategic Task Planner Queue</h3>
+                        <button class="btn btn-xs btn-outline" onclick="toggleTaskModal()">+ Add Upgrade</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="tasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Priority</th>
+                                    <th>Target Upgrade</th>
+                                    <th>Type</th>
+                                    <th>Cost</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="addTaskForm" class="add-task-drawer" style="display: none;">
+                        <h4>Queue New Building Upgrade</h4>
+                        <div class="form-grid">
+                            <input type="text" id="taskTargetName" placeholder="Building Name (e.g. Eagle Artillery)">
+                            <select id="taskCategory">
+                                <option value="Defense">Defense</option>
+                                <option value="Resource">Resource</option>
+                                <option value="Army">Army</option>
+                                <option value="Hero">Hero</option>
+                            </select>
+                            <input type="number" id="taskCurrentLevel" placeholder="Current Level" value="1" min="1">
+                            <input type="number" id="taskTargetLevel" placeholder="Target Level" value="2" min="2">
+                            <select id="taskCostResource">
+                                <option value="Gold">Gold</option>
+                                <option value="Elixir">Elixir</option>
+                                <option value="Dark Elixir">Dark Elixir</option>
+                            </select>
+                            <input type="number" id="taskCostAmount" placeholder="Cost Amount" value="2500000">
+                            <select id="taskPriority">
+                                <option value="HIGH">HIGH Priority</option>
+                                <option value="MEDIUM" selected>MEDIUM Priority</option>
+                                <option value="LOW">LOW Priority</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-sm btn-primary" onclick="submitCustomTask()">Confirm & Queue Task</button>
+                            <button class="btn btn-sm btn-secondary" onclick="toggleTaskModal()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log & Event Stream -->
+                <div class="card log-card">
+                    <div class="card-header">
+                        <h3>📜 Agent Activity Log</h3>
+                        <div class="log-filter-group">
+                            <button class="filter-pill active" onclick="filterLogs('ALL', this)">ALL</button>
+                            <button class="filter-pill" onclick="filterLogs('ACTION', this)">ACTIONS</button>
+                            <button class="filter-pill" onclick="filterLogs('INFO', this)">INFO</button>
+                            <button class="filter-pill" onclick="filterLogs('WARNING', this)">WARNING</button>
+                            <button class="btn btn-xs btn-outline" onclick="clearLogs()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="log-stream" id="logStream"></div>
+                </div>
+
+                <!-- Hardware & System Diagnostics -->
+                <div class="card env-card">
+                    <div class="card-header">
+                        <h3>💻 Environment & Hardware Diagnostics</h3>
+                        <span class="badge badge-success">Optimized</span>
+                    </div>
+                    <div class="env-grid">
+                        <div class="env-item">
+                            <span class="env-label">Host OS:</span>
+                            <span class="env-val">Windows 10/11</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">Python:</span>
+                            <span class="env-val">Python 3.14 (64-bit)</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">Dedicated GPU:</span>
+                            <span class="env-val highlight">NVIDIA GeForce RTX 3050 (6 GB VRAM)</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">System RAM:</span>
+                            <span class="env-val">16 GB System Memory</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">Vision Engine:</span>
+                            <span class="env-val highlight-green">OpenCV 5.0 + HSV Color Segmentation</span>
+                        </div>
+                        <div class="env-item">
+                            <span class="env-label">Safety Mode:</span>
+                            <span class="env-val highlight-green">Autonomous Sandbox Interlocked</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
